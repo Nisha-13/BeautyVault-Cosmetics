@@ -142,7 +142,6 @@ docker-compose logs -f
 
 ## 🎨 Demo Credentials
 
-- **Admin Account**: `admin@beautyvault.com` / `password123`
 - **Customer Account**: `customer@beautyvault.com` / `password123`
 - **Promo Coupon**: Use code `GLOW20` for 20% off during checkout!
 
