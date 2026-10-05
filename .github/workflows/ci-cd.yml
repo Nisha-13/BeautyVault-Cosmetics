@@ -64,7 +64,7 @@ jobs:
 
       - name: Install backend dependencies
         working-directory: backend
-        run: composer install --no-interaction --prefer-dist --no-dev --optimize-autoloader
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
 
       - name: Copy .env for testing
         working-directory: backend
