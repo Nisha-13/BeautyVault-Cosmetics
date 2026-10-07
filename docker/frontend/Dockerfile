@@ -6,13 +6,16 @@ ENV VITE_API_URL=${VITE_API_URL}
 
 WORKDIR /app
 
-# Copy package files first for layer caching
-COPY package*.json ./
+# Copy frontend package files
+COPY frontend/package*.json ./
 RUN npm ci --prefer-offline
 
-# Copy source and build
-COPY . .
+# Copy frontend source
+COPY frontend/ ./
+
+# Build frontend
 RUN npm run build
+
 
 # Production stage - serve with Nginx
 FROM nginx:alpine AS production
@@ -20,8 +23,8 @@ FROM nginx:alpine AS production
 # Copy built assets
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy Nginx SPA config
-COPY ../docker/nginx/spa.conf /etc/nginx/conf.d/default.conf
+# Copy Nginx SPA configuration
+COPY docker/nginx/spa.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 

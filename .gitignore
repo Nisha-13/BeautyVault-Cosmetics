@@ -38,6 +38,7 @@ frontend/.vite/
 
 # Docker
 docker/mysql/data/
+backup/
 
 # Environment / Secrets
 .env
