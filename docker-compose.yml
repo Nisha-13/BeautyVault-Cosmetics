@@ -6,7 +6,7 @@ services:
     image: nginx:alpine
     container_name: beautyvault_nginx
     ports:
-      - "8081:80"
+      - "80:80"
       - "443:443"
     volumes:
       - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
@@ -59,7 +59,6 @@ services:
       - AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION:-us-east-1}
       - AWS_BUCKET=${AWS_BUCKET}
     volumes:
-      - ./backend:/var/www/html
       - backend_storage:/var/www/html/storage
     depends_on:
       mysql:
@@ -80,7 +79,11 @@ services:
       context: .
       dockerfile: docker/frontend/Dockerfile
       args:
-        VITE_API_URL: http://localhost:8081/api/v1
+        VITE_API_URL: http://16.170.232.127/api/v1
+        VITE_REVERB_APP_KEY: ${REVERB_APP_KEY}
+        VITE_REVERB_HOST: 16.170.232.127
+        VITE_REVERB_PORT: 80
+        VITE_REVERB_SCHEME: http
     container_name: beautyvault_frontend
     networks:
       - beautyvault_net
@@ -100,8 +103,6 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-    ports:
-      - "3306:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD:-rootsecret}"]
       interval: 10s
@@ -120,8 +121,6 @@ services:
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redissecret}
     volumes:
       - redis_data:/data
-    ports:
-      - "6379:6379"
     healthcheck:
       test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redissecret}", "ping"]
       interval: 10s
@@ -140,6 +139,8 @@ services:
       dockerfile: ../docker/backend/Dockerfile
     container_name: beautyvault_queue
     command: php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600
+    env_file:
+      - .env
     environment:
       - DB_CONNECTION=mysql
       - DB_HOST=mysql
@@ -151,7 +152,6 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redissecret}
       - QUEUE_CONNECTION=redis
     volumes:
-      - ./backend:/var/www/html
       - backend_storage:/var/www/html/storage
     depends_on:
       - backend
@@ -169,6 +169,8 @@ services:
       dockerfile: ../docker/backend/Dockerfile
     container_name: beautyvault_reverb
     command: php artisan reverb:start --host=0.0.0.0 --port=8080 --no-interaction
+    env_file:
+      - .env
     environment:
       - DB_CONNECTION=mysql
       - DB_HOST=mysql
@@ -181,10 +183,6 @@ services:
       - REVERB_APP_ID=${REVERB_APP_ID}
       - REVERB_APP_KEY=${REVERB_APP_KEY}
       - REVERB_APP_SECRET=${REVERB_APP_SECRET}
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./backend:/var/www/html
     depends_on:
       - backend
       - redis
@@ -201,6 +199,8 @@ services:
       dockerfile: ../docker/backend/Dockerfile
     container_name: beautyvault_scheduler
     command: sh -c "while true; do php artisan schedule:run --no-interaction && sleep 60; done"
+    env_file:
+      - .env
     environment:
       - DB_CONNECTION=mysql
       - DB_HOST=mysql
@@ -210,7 +210,6 @@ services:
       - REDIS_HOST=redis
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redissecret}
     volumes:
-      - ./backend:/var/www/html
       - backend_storage:/var/www/html/storage
     depends_on:
       - backend
@@ -229,8 +228,6 @@ services:
       MEILI_ENV: production
     volumes:
       - meilisearch_data:/meili_data
-    ports:
-      - "7700:7700"
     networks:
       - beautyvault_net
     restart: unless-stopped
